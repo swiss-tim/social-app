@@ -1,5 +1,5 @@
 ## Exclude data from source control by default ##
-/data/
+/social
 
 ## Compressed Files ##
 *.zip

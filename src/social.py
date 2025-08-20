@@ -3,6 +3,8 @@ import requests, datetime as dt, math, time
 from collections import Counter, defaultdict
 import pandas as pd
 import altair as alt
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
 
 # --- Data Fetching and Analysis Functions (from user script) ---
 INSTANCES = [
@@ -225,5 +227,33 @@ if not df_acc.empty:
         st.error("Could not retrieve behavioral data for the selected accounts.")
 else:
     st.info("Skipping behavioral analysis as no trending accounts were found.")
+
+# --- Display Trending Data ---
+st.header("Mastodon Trends")
+col1, col2 = st.columns(2)
+
+with col1:
+    st.subheader("Trending Hashtags (Last 7 Days)")
+    st.dataframe(df_tags.head(25), height=400)
+
+    # --- Hashtag Wordcloud ---
+    st.subheader("Hashtag Wordcloud")
+    hashtag_freq = dict(zip(df_tags["hashtag"], df_tags["uses_7d_total"]))
+    if hashtag_freq:
+        wc = WordCloud(width=600, height=300, background_color="white").generate_from_frequencies(hashtag_freq)
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.imshow(wc, interpolation="bilinear")
+        ax.axis("off")
+        st.pyplot(fig)
+    else:
+        st.info("No hashtag data available for wordcloud.")
+
+with col2:
+    st.subheader("Trending Accounts")
+    if not df_acc.empty:
+        cols = ["_handle", "followers_count", "statuses_count", "last_status_at", "_home_instance"]
+        st.dataframe(df_acc[cols].head(25), height=400)
+    else:
+        st.warning("No trending accounts returned. Some instances may have disabled public trends.")
 
 st.sidebar.info(f"Data is cached for one hour. Last refreshed at {dt.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
